@@ -1,7 +1,7 @@
 {
   "name": "@relaycc/xmtp-js",
   "version": "0.1.0",
-  "description": "XMTP client SDK for interacting with XMTP networks.",
+  "description": "The XMTP client SDK for interacting with XMTP networks, with minor additions and modifications from the Relay team.",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "umd:main": "dist/umd/index.js",
@@ -43,20 +43,14 @@
     "node",
     "nodejs"
   ],
-  "author": "XMTP Labs <eng@xmtp.com>",
   "license": "MIT",
-  "homepage": "https://github.com/xmtp/xmtp-js",
   "repository": {
     "type": "git",
-    "url": "https:git@github.com:xmtp/xmtp-js.git"
-  },
-  "bugs": {
-    "url": "https://github.com/xmtp/xmtp-js/issues"
+    "url": "https:git@github.com:relaycc/xmtp-js.git"
   },
   "release": {
     "branches": [
-      "main",
-      "next"
+      "develop"
     ]
   },
   "dependencies": {
