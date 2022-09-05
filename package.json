@@ -21,6 +21,7 @@
     "clean:proto": "rm -rf src/proto/*.ts",
     "package": "npm pack",
     "prepare": "npm run build",
+    "patch": "npm version patch -m 'patch: Bump version to %s'",
     "prepublishOnly": "npm run build",
     "test:setup": "./dev/up",
     "test:teardown": "./dev/down",
