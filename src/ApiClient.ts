@@ -243,10 +243,16 @@ export default class ApiClient {
     }
   }
 
+  // NOTE(achilles@relay.cc) There's something slightly awkward about this
+  // function, I think stemming from a coupling of the user <-> XMTP-JS API and
+  // the XMTP-JS <-> Waku API. I'm not sure we need to iterate through pages
+  // because on the user <-> XMTP-JS side we just need a paginated query.
   // Use the Query API to return the full contents of any specified topics
   async query(
     params: QueryParams,
     {
+      // NOTE(achilles@relay.cc) It might make sense to default to DESCENDING
+      // because that would make the first page the most recent messages.
       direction = SortDirection.SORT_DIRECTION_ASCENDING,
       limit,
     }: QueryAllOptions
@@ -263,6 +269,12 @@ export default class ApiClient {
         if (limit && out.length === limit) {
           return out
         }
+      }
+      // NOTE(achilles@relay.cc) This conditional breaks make it so that the
+      // async for...of will only ever execute once and the function will only
+      // ever return a single page of length limit.
+      if (limit && out.length === limit) {
+        break
       }
     }
     return out
