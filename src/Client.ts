@@ -48,6 +48,7 @@ export type ListMessagesOptions = {
   startTime?: Date
   endTime?: Date
   limit?: number
+  direction?: messageApi.SortDirection
 }
 
 export enum KeyStoreType {
@@ -436,12 +437,12 @@ export default class Client {
     if (!opts) {
       opts = {}
     }
-    const { startTime, endTime, checkAddresses, limit } = opts
+    const { startTime, endTime, checkAddresses, limit, direction } = opts
 
     const res = await this.apiClient.query(
       { contentTopics: [topic], startTime, endTime },
       {
-        direction: messageApi.SortDirection.SORT_DIRECTION_ASCENDING,
+        direction,
         limit,
       }
     )
