@@ -19,6 +19,7 @@
     "clean:proto": "rm -rf src/proto/*.ts",
     "package": "npm pack",
     "prepare": "npm run build",
+    "patch": "npm version patch -m 'patch: Bump version to %s'",
     "test": "npm run test:node",
     "test:node": "jest --no-cache --runInBand --env='node' --forceExit --testTimeout=30000",
     "test:jsdom": "jest --no-cache --runInBand --env='./jest.jsdom.env.js' --forceExit --testTimeout=30000",
