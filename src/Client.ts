@@ -300,6 +300,34 @@ export default class Client {
     return this.decodeMessage(msgBytes, topics[0])
   }
 
+  async buildMessage(
+    peerAddress: string,
+    content: any,
+    options?: SendOptions
+  ): Promise<Uint8Array> {
+    let topics: string[]
+    const recipient = await this.getUserContact(peerAddress)
+    if (!recipient) {
+      throw new Error(`recipient ${peerAddress} is not registered`)
+    }
+
+    if (!this.contacts.has(peerAddress)) {
+      topics = [
+        buildUserIntroTopic(peerAddress),
+        buildDirectMessageTopic(this.address, peerAddress),
+      ]
+      if (peerAddress !== this.address) {
+        topics.push(buildUserIntroTopic(this.address))
+      }
+      this.contacts.add(peerAddress)
+    } else {
+      topics = [buildDirectMessageTopic(this.address, peerAddress)]
+    }
+    const timestamp = options?.timestamp || new Date()
+    const msg = await this.encodeMessage(recipient, timestamp, content, options)
+    return msg.toBytes()
+  }
+
   async publishEnvelope(env: messageApi.Envelope): Promise<void> {
     const bytes = env.message
     if (!env.contentTopic) {
