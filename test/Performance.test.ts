@@ -3,11 +3,11 @@ import { Client } from '../src'
 import { messageApi } from '@xmtp/proto'
 
 describe('Performance', () => {
-  // it('create a new identity', async () => {
-  //   const wallet = Wallet.createRandom()
-  //   await Client.create(wallet)
-  //   console.log(wallet.address)
-  // })
+  it('create a new identity', async () => {
+    const wallet = Wallet.createRandom()
+    await Client.create(wallet)
+    console.log(wallet.address)
+  })
 
   it('create a client using keybundle', async () => {
     const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
@@ -19,91 +19,91 @@ describe('Performance', () => {
     console.log(clientFromKeys.address)
   })
 
-  // it('create a client', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   await Client.create(wallet)
-  // })
+  it('create a client', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    await Client.create(wallet)
+  })
 
-  // it('checks if an address is on the network', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   const canMessage = await client.canMessage(
-  //     '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
-  //   )
-  // })
+  it('checks if an address is on the network', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    const canMessage = await client.canMessage(
+      '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+    )
+  })
 
-  // it('Fetch one conversation', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   await client.listConversationMessages(wallet.address)
-  // })
+  it('Fetch one conversation', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    await client.listConversationMessages(wallet.address)
+  })
 
-  // it('Fetch one message', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   await client.listConversationMessages(wallet.address, {
-  //     limit: 1,
-  //   })
-  // })
+  it('Fetch one message', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    await client.listConversationMessages(wallet.address, {
+      limit: 1,
+    })
+  })
 
-  // it('List conversations', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   await client.conversations.list()
-  // })
+  it('List conversations', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    await client.conversations.list()
+  })
 
-  // it('Sends a message to itself', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   await client.sendMessage(client.address, JSON.stringify(getAddress()))
-  // })
+  it('Sends a message to itself', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    await client.sendMessage(client.address, JSON.stringify(getAddress()))
+  })
 
-  // it('Fetch one message from hardcoded list', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   const requests = getAddress().map((address) =>
-  //     client.listConversationMessages(address, {
-  //       limit: 1,
-  //       direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-  //     })
-  //   )
-  //   await Promise.all(requests)
-  // })
+  it('Fetch one message from hardcoded list', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    const requests = getAddress().map((address) =>
+      client.listConversationMessages(address, {
+        limit: 1,
+        direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+      })
+    )
+    await Promise.all(requests)
+  })
 
-  // it('Fetch one message from fetched conversations', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   const conversations = await client.conversations.list()
-  //   const addresses = conversations.map(
-  //     (conversation) => conversation.peerAddress
-  //   )
-  //   const requests = addresses.map((address) =>
-  //     client.listConversationMessages(address, {
-  //       limit: 1,
-  //       direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-  //     })
-  //   )
-  //   const result = await Promise.all(requests)
-  //   console.log(result)
-  // })
+  it('Fetch one message from fetched conversations', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    const conversations = await client.conversations.list()
+    const addresses = conversations.map(
+      (conversation) => conversation.peerAddress
+    )
+    const requests = addresses.map((address) =>
+      client.listConversationMessages(address, {
+        limit: 1,
+        direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+      })
+    )
+    const result = await Promise.all(requests)
+    console.log(result)
+  })
 
-  // it('Fetch one message from self-sent list', async () => {
-  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-  //   const client = await Client.create(wallet)
-  //   const message = await client.listConversationMessages(client.address, {
-  //     limit: 1,
-  //     direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-  //   })
-  //   const addresses = JSON.parse(message.pop()?.content)
-  //   const requests = addresses.map((address: string) =>
-  //     client.listConversationMessages(address, {
-  //       limit: 1,
-  //       direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-  //     })
-  //   )
-  //   const result = await Promise.all(requests)
-  //   console.log(result)
-  // })
+  it('Fetch one message from self-sent list', async () => {
+    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+    const client = await Client.create(wallet)
+    const message = await client.listConversationMessages(client.address, {
+      limit: 1,
+      direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+    })
+    const addresses = JSON.parse(message.pop()?.content)
+    const requests = addresses.map((address: string) =>
+      client.listConversationMessages(address, {
+        limit: 1,
+        direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+      })
+    )
+    const result = await Promise.all(requests)
+    console.log(result)
+  })
 })
 
 function getAddress() {
