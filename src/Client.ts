@@ -551,7 +551,6 @@ function createNetworkPrivateKeyStore(
 ): EncryptedKeyStore {
   return new EncryptedKeyStore(wallet, new PrivateTopicStore(apiClient))
 }
-
 function createStaticStore(privateKeyOverride: Uint8Array): KeyStore {
   return new StaticKeyStore(privateKeyOverride)
 }
