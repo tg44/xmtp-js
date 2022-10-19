@@ -1,4 +1,3 @@
-export { default as LocalStorageStore } from './LocalStorageStore'
 export { default as EncryptedStore } from './EncryptedStore'
 export { default as PrivateTopicStore } from './PrivateTopicStore'
 export { default as StaticKeyStore } from './StaticKeyStore'

@@ -10,7 +10,6 @@ import { Signer } from 'ethers'
 import {
   EncryptedStore,
   KeyStore,
-  LocalStorageStore,
   PrivateTopicStore,
   StaticKeyStore,
 } from './store'
@@ -508,10 +507,7 @@ function createKeyStoreFromConfig(
       return createNetworkPrivateKeyStore(wallet, apiClient)
 
     case KeyStoreType.localStorage:
-      if (!wallet) {
-        throw new Error('Must provide a wallet for localStorageStore')
-      }
-      return createLocalPrivateKeyStore(wallet)
+      throw new Error('LocalStorageStore not implemented')
 
     case KeyStoreType.static:
       if (!opts.privateKeyOverride) {
@@ -528,11 +524,6 @@ function createNetworkPrivateKeyStore(
   apiClient: ApiClient
 ): EncryptedStore {
   return new EncryptedStore(wallet, new PrivateTopicStore(apiClient))
-}
-
-// Create Encrypted store which uses LocalStorage to store KeyBundles
-function createLocalPrivateKeyStore(wallet: Signer): EncryptedStore {
-  return new EncryptedStore(wallet, new LocalStorageStore())
 }
 
 function createStaticStore(privateKeyOverride: Uint8Array): KeyStore {

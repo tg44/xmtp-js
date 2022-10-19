@@ -3,86 +3,113 @@ import { Client } from '../src'
 import { messageApi } from '@xmtp/proto'
 
 describe('Performance', () => {
-  it('create a client', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    await Client.create(wallet)
-  })
+  // it('create a new identity', async () => {
+  //   const wallet = Wallet.createRandom()
+  //   await Client.create(wallet)
+  //   console.log(wallet.address)
+  // })
 
-  it('Fetch one conversation', async () => {
+  it('create a client using keybundle', async () => {
     const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
     const client = await Client.create(wallet)
-    await client.listConversationMessages(wallet.address)
-  })
-
-  it('Fetch one message', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    const client = await Client.create(wallet)
-    await client.listConversationMessages(wallet.address, {
-      limit: 1,
+    const keys = await client.keys.encode()
+    const clientFromKeys = await Client.create(null, {
+      privateKeyOverride: keys,
     })
+    console.log(clientFromKeys.address)
   })
 
-  it('List conversations', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    const client = await Client.create(wallet)
-    await client.conversations.list()
-  })
+  // it('create a client', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   await Client.create(wallet)
+  // })
 
-  it('Sends a message to itself', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    const client = await Client.create(wallet)
-    await client.sendMessage(client.address, JSON.stringify(getAddress()))
-  })
+  // it('checks if an address is on the network', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   const canMessage = await client.canMessage(
+  //     '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045'
+  //   )
+  // })
 
-  it('Fetch one message from hardcoded list', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    const client = await Client.create(wallet)
-    const requests = getAddress().map((address) =>
-      client.listConversationMessages(address, {
-        limit: 1,
-        direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-      })
-    )
-    await Promise.all(requests)
-  })
+  // it('Fetch one conversation', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   await client.listConversationMessages(wallet.address)
+  // })
 
-  it('Fetch one message from fetched conversations', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    const client = await Client.create(wallet)
-    const conversations = await client.conversations.list()
-    const addresses = conversations.map(
-      (conversation) => conversation.peerAddress
-    )
-    const requests = addresses.map((address) =>
-      client.listConversationMessages(address, {
-        limit: 1,
-        direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-      })
-    )
-    await Promise.all(requests)
-  })
+  // it('Fetch one message', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   await client.listConversationMessages(wallet.address, {
+  //     limit: 1,
+  //   })
+  // })
 
-  it('Fetch one message from self-sent list', async () => {
-    const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
-    const client = await Client.create(wallet)
-    const message = await client.listConversationMessages(client.address, {
-      limit: 1,
-      direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-    })
-    const addresses = JSON.parse(message.pop()?.content)
-    const requests = addresses.map((address: string) =>
-      client.listConversationMessages(address, {
-        limit: 1,
-        direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
-      })
-    )
-    await Promise.all(requests)
-  })
+  // it('List conversations', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   await client.conversations.list()
+  // })
+
+  // it('Sends a message to itself', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   await client.sendMessage(client.address, JSON.stringify(getAddress()))
+  // })
+
+  // it('Fetch one message from hardcoded list', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   const requests = getAddress().map((address) =>
+  //     client.listConversationMessages(address, {
+  //       limit: 1,
+  //       direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+  //     })
+  //   )
+  //   await Promise.all(requests)
+  // })
+
+  // it('Fetch one message from fetched conversations', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   const conversations = await client.conversations.list()
+  //   const addresses = conversations.map(
+  //     (conversation) => conversation.peerAddress
+  //   )
+  //   const requests = addresses.map((address) =>
+  //     client.listConversationMessages(address, {
+  //       limit: 1,
+  //       direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+  //     })
+  //   )
+  //   const result = await Promise.all(requests)
+  //   console.log(result)
+  // })
+
+  // it('Fetch one message from self-sent list', async () => {
+  //   const wallet = new Wallet(process.env.RELAYCC_TEST_PK as string)
+  //   const client = await Client.create(wallet)
+  //   const message = await client.listConversationMessages(client.address, {
+  //     limit: 1,
+  //     direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+  //   })
+  //   const addresses = JSON.parse(message.pop()?.content)
+  //   const requests = addresses.map((address: string) =>
+  //     client.listConversationMessages(address, {
+  //       limit: 1,
+  //       direction: messageApi.SortDirection.SORT_DIRECTION_DESCENDING,
+  //     })
+  //   )
+  //   const result = await Promise.all(requests)
+  //   console.log(result)
+  // })
 })
 
 function getAddress() {
   return [
     '0x0cb27e883E207905AD2A94F9B6eF0C7A99223C37',
+    '0xf89773CF7cf0B560BC5003a6963b98152D84A15a',
     '0x11Afb8521CbF03C3508378E41d4C5b7e2C90b233',
     '0x13ef2f6cf92B1E7Aa6D7639dB55A20BB6172bFa2',
     '0x15A27532e29D899cBCB2cbD59F9471A4030B3065',
@@ -129,6 +156,5 @@ function getAddress() {
     '0xe82aA0f2184f657dd988FF686Cd2d576710706E0',
     '0xeAEfd55d90a71A0c01AC1B5F0EEdB0dD1A6D0cb2',
     '0xea0670814Dac9bb8B568077d490Fb86c6616E8cf',
-    '0xf89773CF7cf0B560BC5003a6963b98152D84A15a',
   ]
 }
