@@ -74,6 +74,7 @@
     "@typescript-eslint/eslint-plugin": "^5.38.0",
     "@typescript-eslint/parser": "^5.38.0",
     "benny": "^3.7.1",
+    "buffer": "^6.0.3",
     "dd-trace": "^2.12.2",
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
