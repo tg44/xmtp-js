@@ -1,52 +1,41 @@
-import Message from './Message'
-import {
+export { Message, DecodedMessage, decodeContent } from './Message'
+export {
   PublicKey,
   PublicKeyBundle,
+  SignedPublicKey,
+  SignedPublicKeyBundle,
   PrivateKey,
   PrivateKeyBundle,
+  Signature,
 } from './crypto'
-import Stream from './Stream'
-import Client, {
+export { default as Stream } from './Stream'
+export { Signer } from './types/Signer'
+export {
+  default as Client,
   ClientOptions,
+  KeyStoreType,
   ListMessagesOptions,
   SendOptions,
   Compression,
 } from './Client'
-import { Conversation, Conversations } from './conversations'
-import {
+export { Conversations, Conversation } from './conversations'
+export {
   ContentTypeId,
   ContentCodec,
   EncodedContent,
   ContentTypeFallback,
 } from './MessageContent'
-import { TextCodec, ContentTypeText } from './codecs/Text'
-import {
+export { TextCodec, ContentTypeText } from './codecs/Text'
+export {
   Composite,
   CompositeCodec,
   ContentTypeComposite,
 } from './codecs/Composite'
-
+export { ApiUrls, SortDirection } from './ApiClient'
 export {
-  Client,
-  Conversation,
-  Conversations,
-  ClientOptions,
-  ListMessagesOptions,
-  Message,
-  PrivateKey,
-  PrivateKeyBundle,
-  PublicKey,
-  PublicKeyBundle,
-  Stream,
-  ContentTypeId,
-  ContentCodec,
-  EncodedContent,
-  TextCodec,
-  ContentTypeText,
-  ContentTypeFallback,
-  SendOptions,
-  Compression,
-  Composite,
-  CompositeCodec,
-  ContentTypeComposite,
-}
+  nsToDate,
+  dateToNs,
+  fromNanoString,
+  toNanoString,
+  mapPaginatedStream,
+} from './utils'

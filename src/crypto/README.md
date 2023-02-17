@@ -8,21 +8,22 @@ Each participating wallet is associated with a key bundle comprised of an identi
 The public key bundles of both the sender and the recipient that were used to protect a message are also attached to the message for transport/storage.
 The private key bundle must be stored and kept secret. It is required to decrypt the incoming messages.
 
-Following snippet shows the API for managing key bundles (assuming a connected wallet is accessible as `wallet` implementing `ethers.Signer` interface):
+Following snippet shows the API for managing key bundles (assuming a connected wallet is accessible as `wallet` implementing `Signer` interface):
 
 ```js
 // generate new wallet keys
-let pri = await PrivateKeyBundle.generate(wallet)
+let pri = await PrivateKeyBundleV1.generate(wallet)
 let pub = pri.getPublicKeyBundle()
 
 // serialize the public bundle for advertisement on the network
 let bytes = pub.toBytes()
 
 // serialize/encrypt the private bundle for secure storage
-bytes = await pri.encode(wallet)
+store = EncryptedKeyStore(wallet, new LocalStorageStore())
+await store.storePrivateKeyBundle(pri)
 
 // deserialize/decrypt private key bundle from storage
-let pri2 = await PrivateKeyBundle.decode(wallet, bytes)
+let pri2 = await store.loadPrivateKeyBundle()
 ```
 
 ## Sending a message

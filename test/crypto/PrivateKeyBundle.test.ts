@@ -1,24 +1,52 @@
 import * as assert from 'assert'
-import { PrivateKey, PrivateKeyBundle } from '../../src/crypto'
-import * as ethers from 'ethers'
+import {
+  decodePrivateKeyBundle,
+  PrivateKey,
+  PrivateKeyBundleV1,
+  PrivateKeyBundleV2,
+  SignedPublicKeyBundle,
+} from '../../src/crypto'
+import {
+  EncryptedKeyStore,
+  PrivateTopicStore,
+  storageSigRequestText,
+} from '../../src/store'
 import { hexToBytes } from '../../src/crypto/utils'
+import { newWallet, sleep } from '../helpers'
+import ApiClient, { ApiUrls } from '../../src/ApiClient'
 
 describe('Crypto', function () {
   describe('PrivateKeyBundle', function () {
-    it('encrypts private key bundle for storage using a wallet', async function () {
-      // create a wallet using a generated key
-      const bobPri = PrivateKey.generate()
-      assert.ok(bobPri.secp256k1)
-      const wallet = new ethers.Wallet(bobPri.secp256k1.bytes)
+    it('v2 generate/encode/decode', async function () {
+      const wallet = newWallet()
       // generate key bundle
-      const bob = await PrivateKeyBundle.generate(wallet)
-      // encrypt and serialize the bundle for storage
-      const bytes = await bob.toEncryptedBytes(wallet)
-      // decrypt and decode the bundle from storage
-      const bobDecoded = await PrivateKeyBundle.fromEncryptedBytes(
-        wallet,
-        bytes
+      const bundle = await PrivateKeyBundleV2.generate(wallet)
+      const bytes = bundle.encode()
+      const bundle2 = decodePrivateKeyBundle(bytes)
+      expect(bundle2).toBeInstanceOf(PrivateKeyBundleV2)
+      expect(bundle2.version).toBe(2)
+      expect(bundle.equals(bundle2 as PrivateKeyBundleV2))
+      expect(
+        bundle
+          .getPublicKeyBundle()
+          .equals((bundle2 as PrivateKeyBundleV2).getPublicKeyBundle())
       )
+    })
+    it('encrypts private key bundle for storage using a wallet', async function () {
+      const wallet = newWallet()
+      // generate key bundle
+      const bob = await PrivateKeyBundleV1.generate(wallet)
+      // encrypt and serialize the bundle for storage
+      const store = new EncryptedKeyStore(
+        wallet,
+        new PrivateTopicStore(new ApiClient(ApiUrls['local']))
+      )
+      const bytes = await store.storePrivateKeyBundle(bob)
+      await sleep(100)
+      // decrypt and decode the bundle from storage
+      const bobDecoded = await store.loadPrivateKeyBundle()
+
+      assert.ok(bobDecoded)
       assert.ok(bob.identityKey)
       assert.ok(bobDecoded.identityKey)
       assert.ok(bob.identityKey.publicKey.signature)
@@ -48,16 +76,30 @@ describe('Crypto', function () {
         )
       )
       assert.ok(pri.secp256k1)
-      const wallet = new ethers.Wallet(pri.secp256k1.bytes)
-      const bundle = await PrivateKeyBundle.generate(wallet)
+      const wallet = newWallet()
+      const bundle = await PrivateKeyBundleV1.generate(wallet)
       const preKey = hexToBytes(
         'f51bd1da9ec2239723ae2cf6a9f8d0ac37546b27e634002c653d23bacfcc67ad'
       )
-      const actual = PrivateKeyBundle.storageSigRequestText(preKey)
+      const actual = storageSigRequestText(preKey)
       const expected =
         'XMTP : Enable Identity\nf51bd1da9ec2239723ae2cf6a9f8d0ac37546b27e634002c653d23bacfcc67ad\n\nFor more info: https://xmtp.org/signatures/'
       assert.equal(actual, expected)
       assert.ok(true)
+    })
+  })
+  describe('SignedPublicKeyBundle', () => {
+    it('legacy roundtrip', async function () {
+      const wallet = newWallet()
+      const pri = await PrivateKeyBundleV1.generate(wallet)
+      const pub = SignedPublicKeyBundle.fromLegacyBundle(
+        pri.getPublicKeyBundle()
+      )
+      expect(pub.isFromLegacyBundle()).toBeTruthy()
+      const leg = pub.toLegacyBundle()
+      const pub2 = SignedPublicKeyBundle.fromLegacyBundle(leg)
+      expect(pub.equals(pub2)).toBeTruthy()
+      expect(pub2.identityKey.verifyKey(pub2.preKey)).toBeTruthy()
     })
   })
 })

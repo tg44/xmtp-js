@@ -1,62 +1,72 @@
-import { EncryptedStore, LocalStorageStore } from '../../src/store'
-import assert from 'assert'
-import { PrivateKey, PrivateKeyBundle } from '../../src/crypto'
 import { Wallet } from 'ethers'
+import { EncryptedKeyStore, PrivateTopicStore } from '../../src/store'
+import assert from 'assert'
+import { PrivateKeyBundleV1 } from '../../src/crypto'
+import { newWallet, sleep, wrapAsLedgerWallet } from '../helpers'
+import ApiClient, { ApiUrls } from '../../src/ApiClient'
 
-describe('LocalStorageStore', () => {
+describe('EncryptedKeyStore', () => {
+  let wallet: Wallet
   beforeEach(() => {
-    localStorage.clear()
+    wallet = newWallet()
   })
 
-  const store = new LocalStorageStore()
-
-  it('can get and set valid a valid buffer', async () => {
-    const validTestBytes = Buffer.from('gm', 'utf-8')
-    await store.set('test-key', validTestBytes)
-    assert.equal('gm', await store.get('test-key'))
-  })
-
-  it('can get and set message with special characters', async () => {
-    const stringWithSpecialChars = '🍕🎉Ѯ'
-    const validTestBytes = Buffer.from(stringWithSpecialChars, 'utf-8')
-    await store.set('test-key', validTestBytes)
-    assert.equal(stringWithSpecialChars, await store.get('test-key'))
-  })
-
-  it('returns null for unset values', async () => {
-    assert.equal(null, await store.get("key-that-doesn't-exist"))
-  })
-
-  it('works with a private key', async () => {
-    const key = PrivateKey.generate()
-    const inputValue = Buffer.from(key.toBytes())
-    await store.set('message', inputValue)
-    const storedValue = await store.get('message')
-
-    assert.deepEqual(storedValue, inputValue)
-
-    const newKey = PrivateKey.fromBytes(storedValue as Buffer)
-    expect(newKey.toBytes()).toEqual(key.toBytes())
-  })
-})
-
-describe('EncryptedStore', () => {
-  beforeEach(() => {
-    localStorage.clear()
-  })
-
-  const wallet = new Wallet(
-    PrivateKey.generate().secp256k1?.bytes as Uint8Array
-  )
-  const store = new LocalStorageStore()
+  const store = new PrivateTopicStore(new ApiClient(ApiUrls['local']))
 
   it('can encrypt and store a private key bundle', async () => {
-    const secureStore = new EncryptedStore(wallet, store)
-    const originalBundle = await PrivateKeyBundle.generate(wallet)
+    const wallet = newWallet()
+    const secureStore = new EncryptedKeyStore(wallet, store)
+    const originalBundle = await PrivateKeyBundleV1.generate(wallet)
 
     await secureStore.storePrivateKeyBundle(originalBundle)
-    const returnedBundle =
-      (await secureStore.loadPrivateKeyBundle()) as PrivateKeyBundle
+    await sleep(100)
+    const returnedBundle = await secureStore.loadPrivateKeyBundle()
+
+    assert.ok(returnedBundle)
+    assert.deepEqual(
+      originalBundle.identityKey.toBytes(),
+      returnedBundle.identityKey.toBytes()
+    )
+    assert.equal(originalBundle.preKeys.length, returnedBundle.preKeys.length)
+    assert.deepEqual(
+      originalBundle.preKeys[0].toBytes(),
+      returnedBundle.preKeys[0].toBytes()
+    )
+  })
+
+  it('can encrypt with Ledger and decrypt with Metamask', async () => {
+    const wallet = newWallet()
+    const ledgerLikeWallet = wrapAsLedgerWallet(wallet)
+    const secureLedgerStore = new EncryptedKeyStore(ledgerLikeWallet, store)
+    const secureNormalStore = new EncryptedKeyStore(wallet, store)
+    const originalBundle = await PrivateKeyBundleV1.generate(ledgerLikeWallet)
+
+    await secureLedgerStore.storePrivateKeyBundle(originalBundle)
+    await sleep(100)
+    const returnedBundle = await secureNormalStore.loadPrivateKeyBundle()
+
+    assert.ok(returnedBundle)
+    assert.deepEqual(
+      originalBundle.identityKey.toBytes(),
+      returnedBundle.identityKey.toBytes()
+    )
+    assert.equal(originalBundle.preKeys.length, returnedBundle.preKeys.length)
+    assert.deepEqual(
+      originalBundle.preKeys[0].toBytes(),
+      returnedBundle.preKeys[0].toBytes()
+    )
+  })
+
+  it('can encrypt with Metamask and decrypt with Ledger', async () => {
+    const wallet = newWallet()
+    const ledgerLikeWallet = wrapAsLedgerWallet(wallet)
+    const secureLedgerStore = new EncryptedKeyStore(ledgerLikeWallet, store)
+    const secureNormalStore = new EncryptedKeyStore(wallet, store)
+    const originalBundle = await PrivateKeyBundleV1.generate(wallet)
+
+    await secureNormalStore.storePrivateKeyBundle(originalBundle)
+    await sleep(100)
+    const returnedBundle = await secureLedgerStore.loadPrivateKeyBundle()
 
     assert.ok(returnedBundle)
     assert.deepEqual(
@@ -71,7 +81,7 @@ describe('EncryptedStore', () => {
   })
 
   it('returns null when no bundle found', async () => {
-    const secureStore = new EncryptedStore(wallet, store)
+    const secureStore = new EncryptedKeyStore(wallet, store)
     assert.equal(null, await secureStore.loadPrivateKeyBundle())
   })
 })
