@@ -1,18 +1,21 @@
+import { dateToNs, toNanoString } from './../src/utils'
 import { Wallet } from 'ethers'
 import {
   PrivateKey,
-  Message,
   ContentCodec,
   ContentTypeId,
   TextCodec,
   Client,
   ClientOptions,
 } from '../src'
+import { Signer } from '../src/types/Signer'
 import Stream from '../src/Stream'
 import { promiseWithTimeout } from '../src/utils'
 import assert from 'assert'
-import { xmtpEnvelope } from '@xmtp/proto'
-type PublicKeyBundle = xmtpEnvelope.PublicKeyBundle
+import { PublicKeyBundle, SignedPublicKeyBundle } from '../src/crypto'
+import { messageApi, fetcher } from '@xmtp/proto'
+
+const { b64Encode } = fetcher
 
 export const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms))
@@ -41,10 +44,10 @@ export async function pollFor<T>(
 export async function waitForUserContact(
   c1: Client,
   c2: Client
-): Promise<PublicKeyBundle | undefined> {
+): Promise<PublicKeyBundle | SignedPublicKeyBundle> {
   return pollFor(
     async () => {
-      const contact = await c1.getUserContactFromNetwork(c2.address)
+      const contact = await c1.getUserContact(c2.address)
       assert.ok(contact)
       return contact
     },
@@ -53,11 +56,11 @@ export async function waitForUserContact(
   )
 }
 
-export async function dumpStream(
-  stream: Stream<Message>,
+export async function dumpStream<T>(
+  stream: Stream<T>,
   timeoutMs = 1000
-): Promise<Message[]> {
-  const messages: Message[] = []
+): Promise<T[]> {
+  const messages: T[] = []
   try {
     while (true) {
       const result = await promiseWithTimeout(
@@ -83,6 +86,48 @@ export function newWallet(): Wallet {
     throw new Error('invalid key')
   }
   return new Wallet(key.secp256k1.bytes)
+}
+
+export function newCustomWallet(): Signer {
+  const ethersWallet = newWallet()
+  // Client apps don't have to use ethers, they can implement their
+  // own Signer methods. Here we implement a custom Signer that is actually
+  // backed by ethers.
+  return {
+    getAddress(): Promise<string> {
+      return ethersWallet.getAddress()
+    },
+    signMessage(message: ArrayLike<number> | string): Promise<string> {
+      return ethersWallet.signMessage(message).then((signature) => {
+        return new Promise((resolve) => {
+          resolve(signature)
+        })
+      })
+    },
+  }
+}
+
+export function wrapAsLedgerWallet(ethersWallet: Wallet): Signer {
+  // Wraps a wallet and switches the last byte of signature to canonical form
+  // so 0x1b => 0x00 and 0x1c => 0x01
+  return {
+    getAddress(): Promise<string> {
+      return ethersWallet.getAddress()
+    },
+    signMessage(message: ArrayLike<number> | string): Promise<string> {
+      return ethersWallet.signMessage(message).then((signature) => {
+        const bytes = Buffer.from(signature.slice(2), 'hex')
+        const lastByte = bytes[bytes.length - 1]
+        if (lastByte < 0x1b) {
+          return new Promise((resolve) => resolve(signature))
+        }
+        bytes[bytes.length - 1] = lastByte - 0x1b
+        return new Promise((resolve) => {
+          resolve('0x' + bytes.toString('hex'))
+        })
+      })
+    },
+  }
 }
 
 // A helper to replace a full Client in testing custom content types,
@@ -120,6 +165,43 @@ export const newLocalHostClient = (
     ...opts,
   })
 
+// client running against local node running on the host,
+// with a non-ethers wallet
+export const newLocalHostClientWithCustomWallet = (
+  opts?: Partial<ClientOptions>
+): Promise<Client> =>
+  Client.create(newCustomWallet(), {
+    env: 'local',
+    ...opts,
+  })
+
 // client running against the dev cluster in AWS
-export const newDevClient = (): Promise<Client> =>
-  Client.create(newWallet(), { env: 'dev' })
+export const newDevClient = (opts?: Partial<ClientOptions>): Promise<Client> =>
+  Client.create(newWallet(), {
+    env: 'dev',
+    ...opts,
+  })
+
+export const buildEnvelope = (
+  message: Uint8Array,
+  contentTopic: string,
+  created: Date
+): messageApi.Envelope => {
+  return {
+    contentTopic,
+    timestampNs: toNanoString(created),
+    message: b64Encode(message, 0, message.length) as unknown as Uint8Array,
+  }
+}
+
+export const buildProtoEnvelope = (
+  payload: Uint8Array,
+  contentTopic: string,
+  timestamp: Date
+) => {
+  return {
+    contentTopic,
+    timestampNs: dateToNs(timestamp),
+    payload,
+  }
+}
