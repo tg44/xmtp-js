@@ -2,18 +2,25 @@ import {
   ConversationV1,
   decodeMessageV1,
   decodeMessageV2,
-  encodeMessageV1, encodeMessageV2
-} from "./../../src/conversations/Conversation";
-import { DecodedMessage, DecodedMessageExport, MessageV1 } from "./../../src/Message";
-import { buildDirectMessageTopic, buildUserIntroTopic } from "../../src/utils";
+  encodeMessageV1,
+  encodeMessageV2,
+} from './../../src/conversations/Conversation'
+import {
+  DecodedMessage,
+  DecodedMessageExport,
+  MessageV1,
+} from './../../src/Message'
+import { buildDirectMessageTopic, buildUserIntroTopic } from '../../src/utils'
 import {
   Client,
   Compression,
   ContentTypeFallback,
   ContentTypeId,
-  ContentTypeText, PublicKeyBundle, TextCodec
-} from "../../src";
-import { SortDirection } from "../../src"
+  ContentTypeText,
+  PublicKeyBundle,
+  TextCodec,
+} from '../../src'
+import { SortDirection } from '../../src'
 import { sleep } from '../../src/utils'
 import { newLocalHostClient, newWallet, waitForUserContact } from '../helpers'
 import {
@@ -21,10 +28,10 @@ import {
   PrivateKeyBundleV1,
   SignedPublicKeyBundle,
 } from '../../src/crypto'
-import { ConversationV2 } from "../../src/conversations"
+import { ConversationV2 } from '../../src/conversations'
 import { ContentTypeTestKey, TestKeyCodec } from '../ContentTypeTestKey'
 import { content as proto, fetcher } from '@xmtp/proto'
-import Stream from "../../src/Stream";
+import Stream from '../../src/Stream'
 
 describe('conversation', () => {
   let alice: Client
@@ -668,8 +675,8 @@ describe('conversation', () => {
 
   describe('encode/decode is classless on V1', () => {
     beforeEach(async () => {
-      alice = await newLocalHostClient({publishLegacyContact: true})
-      bob = await newLocalHostClient({publishLegacyContact: true})
+      alice = await newLocalHostClient({ publishLegacyContact: true })
+      bob = await newLocalHostClient({ publishLegacyContact: true })
       await waitForUserContact(alice, alice)
       await waitForUserContact(bob, bob)
     })
@@ -682,7 +689,8 @@ describe('conversation', () => {
         alice.address
       )
       const baseCodecs = {
-        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]: new TextCodec(),
+        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]:
+          new TextCodec(),
       }
 
       const stream = await Stream.create<DecodedMessageExport>(
@@ -690,14 +698,17 @@ describe('conversation', () => {
         [aliceConversation.topic],
         async (e) => {
           const convo = deepcopy(aliceConversation.export())
-          if(convo.version !== 'v1') {
+          if (convo.version !== 'v1') {
             throw new Error('unexpected convo version')
           }
           const keys = deepcopy(aliceConversation.getClient().legacyKeys)
           return await decodeMessageV1(
             e,
             convo,
-            {codecFor: (c: ContentTypeId) => baseCodecs[`${c.authorityId}/${c.typeId}`]},
+            {
+              codecFor: (c: ContentTypeId) =>
+                baseCodecs[`${c.authorityId}/${c.typeId}`],
+            },
             keys
           )
         }
@@ -724,21 +735,28 @@ describe('conversation', () => {
         alice.address
       )
       const baseCodecs = {
-        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]: new TextCodec(),
+        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]:
+          new TextCodec(),
       }
 
       await sleep(100)
 
       let topics: string[]
-      let recipient = await bobConversation.getClient().getUserContact(bobConversation.peerAddress)
+      let recipient = await bobConversation
+        .getClient()
+        .getUserContact(bobConversation.peerAddress)
       if (!recipient) {
-        throw new Error(`recipient ${bobConversation.peerAddress} is not registered`)
+        throw new Error(
+          `recipient ${bobConversation.peerAddress} is not registered`
+        )
       }
       if (!(recipient instanceof PublicKeyBundle)) {
         recipient = recipient.toLegacyBundle()
       }
 
-      if (!bobConversation.getClient().contacts.has(bobConversation.peerAddress)) {
+      if (
+        !bobConversation.getClient().contacts.has(bobConversation.peerAddress)
+      ) {
         topics = [
           buildUserIntroTopic(bobConversation.peerAddress),
           buildUserIntroTopic(bobConversation.getClient().address),
@@ -751,12 +769,10 @@ describe('conversation', () => {
 
       const keys = deepcopy(bobConversation.getClient().legacyKeys)
 
-      const msg = await encodeMessageV1(
-        "Hi Alice!",
-        keys,
-        recipient,
-        {codecFor: (c: ContentTypeId) => baseCodecs[`${c.authorityId}/${c.typeId}`]},
-      )
+      const msg = await encodeMessageV1('Hi Alice!', keys, recipient, {
+        codecFor: (c: ContentTypeId) =>
+          baseCodecs[`${c.authorityId}/${c.typeId}`],
+      })
 
       await bobConversation.getClient().publishEnvelopes(
         topics.map((topic) => ({
@@ -768,9 +784,7 @@ describe('conversation', () => {
 
       await sleep(100)
 
-      const [aliceMessages] = await Promise.all([
-        aliceConversation.messages(),
-      ])
+      const [aliceMessages] = await Promise.all([aliceConversation.messages()])
 
       expect(aliceMessages).toHaveLength(1)
       expect(aliceMessages[0].messageVersion).toBe('v1')
@@ -795,7 +809,8 @@ describe('conversation', () => {
         alice.address
       )
       const baseCodecs = {
-        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]: new TextCodec(),
+        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]:
+          new TextCodec(),
       }
 
       const stream = await Stream.create<DecodedMessageExport>(
@@ -803,14 +818,13 @@ describe('conversation', () => {
         [aliceConversation.topic],
         async (e) => {
           const convo = deepcopy(aliceConversation.export())
-          if(convo.version !== 'v2') {
+          if (convo.version !== 'v2') {
             throw new Error('unexpected convo version')
           }
-          return await decodeMessageV2(
-            e,
-            convo,
-            {codecFor: (c: ContentTypeId) => baseCodecs[`${c.authorityId}/${c.typeId}`]}
-          )
+          return await decodeMessageV2(e, convo, {
+            codecFor: (c: ContentTypeId) =>
+              baseCodecs[`${c.authorityId}/${c.typeId}`],
+          })
         }
       )
 
@@ -835,19 +849,23 @@ describe('conversation', () => {
         alice.address
       )
       const baseCodecs = {
-        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]: new TextCodec(),
+        [`${ContentTypeText.authorityId}/${ContentTypeText.typeId}`]:
+          new TextCodec(),
       }
 
       const convo = bobConversation.export()
-      if(convo.version !== 'v2') {
+      if (convo.version !== 'v2') {
         throw new Error('unexpected convo version')
       }
 
       const msg = await encodeMessageV2(
-        "Hi Alice!",
+        'Hi Alice!',
         deepcopy(convo),
         deepcopy(bobConversation.getClient().keys),
-        {codecFor: (c: ContentTypeId) => baseCodecs[`${c.authorityId}/${c.typeId}`]},
+        {
+          codecFor: (c: ContentTypeId) =>
+            baseCodecs[`${c.authorityId}/${c.typeId}`],
+        },
         undefined
       )
       await bobConversation.getClient().publishEnvelopes([
@@ -855,14 +873,12 @@ describe('conversation', () => {
           contentTopic: bobConversation.topic,
           message: msg.toBytes(),
           timestamp: msg.sent,
-        }]
-      )
+        },
+      ])
 
       await sleep(100)
 
-      const [aliceMessages] = await Promise.all([
-        aliceConversation.messages(),
-      ])
+      const [aliceMessages] = await Promise.all([aliceConversation.messages()])
 
       expect(aliceMessages).toHaveLength(1)
       expect(aliceMessages[0].messageVersion).toBe('v2')
@@ -870,7 +886,5 @@ describe('conversation', () => {
       expect(aliceMessages[0].senderAddress).toBe(bob.address)
       expect(aliceMessages[0].conversation.topic).toBe(aliceConversation.topic)
     })
-
   })
-
 })

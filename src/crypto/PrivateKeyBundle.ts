@@ -176,9 +176,10 @@ export class PrivateKeyBundleV1 implements proto.PrivateKeyBundleV1 {
     const fixPrivateKey = (privateKey: proto.PrivateKey) => {
       if (privateKey.secp256k1) {
         if (
-          !((privateKey.timestamp as any) instanceof Long) &&
+          !((privateKey.timestamp as unknown) instanceof Long) &&
           privateKey.timestamp !== undefined
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           privateKey.timestamp = Long.fromValue(privateKey.timestamp as any)
         }
         if (typeof privateKey.secp256k1.bytes === 'object') {
@@ -197,10 +198,11 @@ export class PrivateKeyBundleV1 implements proto.PrivateKeyBundleV1 {
               )
           }
           if (
-            !((privateKey.publicKey.timestamp as any) instanceof Long) &&
+            !((privateKey.publicKey.timestamp as unknown) instanceof Long) &&
             privateKey.publicKey.timestamp !== undefined
           ) {
             privateKey.publicKey.timestamp = Long.fromValue(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               privateKey.publicKey.timestamp as any
             )
           }
