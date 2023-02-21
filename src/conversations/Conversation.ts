@@ -49,6 +49,7 @@ import { CodecRegistry } from '../MessageContent'
 const { b64Decode } = fetcher
 
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+type EncoderFunType = typeof encodeMessageV1 | typeof encodeMessageV2
 
 export type ConversationV1Export = {
   version: 'v1'
@@ -159,7 +160,8 @@ export class ConversationV1 {
    */
   async send(
     content: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    options?: SendOptions
+    options?: SendOptions,
+    encoderFn: EncoderFunType = encodeMessageV1
   ): Promise<DecodedMessage> {
     let topics: string[]
     let recipient = await this.client.getUserContact(this.peerAddress)
@@ -182,11 +184,13 @@ export class ConversationV1 {
     }
 
     const contentType = options?.contentType || ContentTypeText
-    const msg = await encodeMessageV1(
+    const msg = await encoderFn(
       content,
+      this.export(),
       this.client.legacyKeys,
+      this.client.keys,
       recipient,
-      this.client,
+      this.getClient(),
       options
     )
 
@@ -199,7 +203,7 @@ export class ConversationV1 {
     )
 
     return DecodedMessage.fromV1Message(
-      msg,
+      msg as MessageV1,
       content,
       contentType,
       topics[0], // Just use the first topic for the returned value
@@ -295,9 +299,18 @@ export class ConversationV2 {
    */
   async send(
     content: any, // eslint-disable-line @typescript-eslint/no-explicit-any
-    options?: SendOptions
+    options?: SendOptions,
+    encoderFn: EncoderFunType = encodeMessageV2
   ): Promise<DecodedMessage> {
-    const msg = await this.encodeMessage(content, options)
+    const msg = await encoderFn(
+      content,
+      this.export(),
+      this.client.legacyKeys,
+      this.client.keys,
+      null,
+      this.getClient(),
+      options
+    )
     await this.client.publishEnvelopes([
       {
         contentTopic: this.topic,
@@ -308,7 +321,7 @@ export class ConversationV2 {
     const contentType = options?.contentType || ContentTypeText
 
     return DecodedMessage.fromV2Message(
-      msg,
+      msg as MessageV2,
       content,
       contentType,
       this.topic,
@@ -328,8 +341,10 @@ export class ConversationV2 {
     return encodeMessageV2(
       content,
       this.export(),
+      this.client.legacyKeys,
       this.client.keys,
-      this.client,
+      null,
+      this.getClient(),
       options
     )
   }
@@ -486,14 +501,56 @@ export async function decodeMessageV2(
   )
 }
 
+export async function encodeMessage(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: any,
+  conversation: ConversationExport,
+  senderBundle: privateKeyProto.PrivateKeyBundleV1,
+  senderBundleV2: privateKeyProto.PrivateKeyBundleV2,
+  recipientBundle: publicKey.PublicKeyBundle | null,
+  registry: CodecRegistry,
+  options?: SendOptions
+): Promise<MessageV1 | MessageV2> {
+  if (conversation.version === 'v1') {
+    return encodeMessageV1(
+      content,
+      conversation,
+      senderBundle,
+      senderBundleV2,
+      recipientBundle,
+      registry,
+      options
+    )
+  } else if (conversation.version === 'v2') {
+    return encodeMessageV2(
+      content,
+      conversation,
+      senderBundle,
+      senderBundleV2,
+      recipientBundle,
+      registry,
+      options
+    )
+  } else {
+    throw new Error('unknown conversation version')
+  }
+}
+
 export async function encodeMessageV1(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: any,
+  conversation: ConversationExport,
   senderBundle: privateKeyProto.PrivateKeyBundleV1,
-  recipientBundle: publicKey.PublicKeyBundle,
+  senderBundleV2: privateKeyProto.PrivateKeyBundleV2,
+  recipientBundle: publicKey.PublicKeyBundle | null,
   registry: CodecRegistry,
   options?: SendOptions
 ): Promise<MessageV1> {
+  if (recipientBundle === null) {
+    throw new Error(
+      'recipient bundle is null, if you use v2, please use encodeMessageV2'
+    )
+  }
   const sender = PrivateKeyBundleV1.from(senderBundle)
   const recipient = PublicKeyBundle.from(recipientBundle)
   const timestamp = options?.timestamp || new Date()
@@ -504,12 +561,17 @@ export async function encodeMessageV1(
 export async function encodeMessageV2(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   content: any,
-  conversation: ConversationV2Export,
-  keyBundleV2: privateKeyProto.PrivateKeyBundleV2,
+  conversation: ConversationExport,
+  senderBundle: privateKeyProto.PrivateKeyBundleV1,
+  senderBundleV2: privateKeyProto.PrivateKeyBundleV2,
+  recipientBundle: publicKey.PublicKeyBundle | null,
   registry: CodecRegistry,
   options?: SendOptions
 ): Promise<MessageV2> {
-  const keys = PrivateKeyBundleV2.from(keyBundleV2)
+  if (conversation.version !== 'v2') {
+    throw new Error('conversation is not v2')
+  }
+  const keys = PrivateKeyBundleV2.from(senderBundleV2)
   const payload = await encodeContent(content, registry, options)
   const header: message.MessageHeaderV2 = {
     topic: conversation.topic,

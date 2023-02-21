@@ -4,7 +4,7 @@ import {
   decodeMessageV2,
   encodeMessageV1,
   encodeMessageV2,
-} from './../../src/conversations/Conversation'
+} from "../../src/conversations"
 import {
   DecodedMessage,
   DecodedMessageExport,
@@ -768,11 +768,19 @@ describe('conversation', () => {
       }
 
       const keys = deepcopy(bobConversation.getClient().legacyKeys)
+      const keysV2 = deepcopy(bobConversation.getClient().keys)
 
-      const msg = await encodeMessageV1('Hi Alice!', keys, recipient, {
-        codecFor: (c: ContentTypeId) =>
-          baseCodecs[`${c.authorityId}/${c.typeId}`],
-      })
+      const msg = await encodeMessageV1(
+        'Hi Alice!',
+        deepcopy(bobConversation.export()),
+        keys,
+        keysV2,
+        recipient,
+        {
+          codecFor: (c: ContentTypeId) =>
+            baseCodecs[`${c.authorityId}/${c.typeId}`],
+        }
+      )
 
       await bobConversation.getClient().publishEnvelopes(
         topics.map((topic) => ({
@@ -861,7 +869,9 @@ describe('conversation', () => {
       const msg = await encodeMessageV2(
         'Hi Alice!',
         deepcopy(convo),
+        deepcopy(bobConversation.getClient().legacyKeys),
         deepcopy(bobConversation.getClient().keys),
+        null,
         {
           codecFor: (c: ContentTypeId) =>
             baseCodecs[`${c.authorityId}/${c.typeId}`],

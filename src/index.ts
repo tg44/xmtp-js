@@ -49,6 +49,7 @@ export {
 export {
   decodeMessageV1,
   decodeMessageV2,
+  encodeMessage,
   encodeMessageV1,
   encodeMessageV2,
   ConversationExport,
