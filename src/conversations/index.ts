@@ -5,6 +5,7 @@ export {
   decodeMessageV2,
   encodeMessageV1,
   encodeMessageV2,
+  ConversationExport,
+  ConversationV1Export,
+  ConversationV2Export,
 } from './Conversation'
-export * as conversations from './Conversations'
-export * as conversation from './Conversation'

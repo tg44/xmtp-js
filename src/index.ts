@@ -25,7 +25,6 @@ export {
   Compression,
 } from './Client'
 export { Conversations, Conversation } from './conversations'
-export * as conversations from './conversations'
 export {
   ContentTypeId,
   ContentCodec,
@@ -46,3 +45,13 @@ export {
   toNanoString,
   mapPaginatedStream,
 } from './utils'
+
+export {
+  decodeMessageV1,
+  decodeMessageV2,
+  encodeMessageV1,
+  encodeMessageV2,
+  ConversationExport,
+  ConversationV1Export,
+  ConversationV2Export,
+} from './conversations/Conversation'
