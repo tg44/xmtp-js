@@ -48,9 +48,6 @@ import { CodecRegistry } from '../MessageContent'
 
 const { b64Decode } = fetcher
 
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-type EncoderFunType = typeof encodeMessageV1 | typeof encodeMessageV2
-
 export type ConversationV1Export = {
   version: 'v1'
   peerAddress: string
@@ -68,6 +65,18 @@ export type ConversationV2Export = {
 }
 
 export type ConversationExport = ConversationV1Export | ConversationV2Export
+
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
+export type EncoderFunType = (
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: any,
+  conversation: ConversationExport,
+  senderBundle: privateKeyProto.PrivateKeyBundleV1,
+  senderBundleV2: privateKeyProto.PrivateKeyBundleV2,
+  recipientBundle: publicKey.PublicKeyBundle | null,
+  registry: CodecRegistry,
+  options?: SendOptions
+) => Promise<MessageV1 | MessageV2>
 
 /**
  * Conversation class allows you to view, stream, and send messages to/from a peer address

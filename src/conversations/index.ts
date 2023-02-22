@@ -9,4 +9,5 @@ export {
   ConversationExport,
   ConversationV1Export,
   ConversationV2Export,
+  EncoderFunType,
 } from './Conversation'

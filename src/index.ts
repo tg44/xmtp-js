@@ -3,6 +3,8 @@ export {
   DecodedMessage,
   DecodedMessageExport,
   decodeContent,
+  MessageV1,
+  MessageV2,
 } from './Message'
 export * as message from './Message'
 export {
@@ -55,4 +57,5 @@ export {
   ConversationExport,
   ConversationV1Export,
   ConversationV2Export,
+  EncoderFunType,
 } from './conversations/Conversation'

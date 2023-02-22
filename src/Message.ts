@@ -1,8 +1,9 @@
-import type {
-  Conversation,
-  ConversationExport,
-} from './conversations/Conversation'
-import { message as proto, content as protoContent } from '@xmtp/proto'
+import type { Conversation, ConversationExport } from './conversations'
+import {
+  message as proto,
+  content as protoContent,
+  ciphertext as cipherProto,
+} from '@xmtp/proto'
 import Long from 'long'
 import Ciphertext from './crypto/Ciphertext'
 import {
@@ -24,6 +25,7 @@ import {
 import { nsToDate } from './utils'
 import { decompress } from './Compression'
 import { deepEqual } from './utils/equals'
+import { parseObjectToUint8Array } from './utils/uint8Array'
 
 const headerBytesAndCiphertext = (
   msg: proto.Message
@@ -52,7 +54,7 @@ class MessageBase {
    * be used in determining uniqueness of messages.
    */
   id: string
-  private bytes: Uint8Array
+  protected bytes: Uint8Array
 
   constructor(id: string, bytes: Uint8Array, obj: proto.Message) {
     ;[this.headerBytes, this.ciphertext] = headerBytesAndCiphertext(obj)
@@ -83,6 +85,37 @@ export class MessageV1 extends MessageBase implements proto.MessageV1 {
     super(id, bytes, obj)
     this.senderAddress = senderAddress
     this.header = header
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static toJSON(msg: MessageV1): any {
+    return {
+      headerBytes: msg.headerBytes,
+      ciphertext: cipherProto.Ciphertext.toJSON(msg.ciphertext),
+      id: msg.id,
+      bytes: msg.bytes,
+      header: proto.MessageHeaderV1.toJSON(msg.header),
+      senderAddress: msg.senderAddress,
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static from(msg: MessageV1 | any): MessageV1 {
+    if (msg instanceof MessageV1) {
+      return msg
+    } else {
+      if (typeof msg.bytes === 'object') {
+        msg.bytes = parseObjectToUint8Array(msg.bytes)
+      }
+      const m = { v1: proto.MessageV1.fromJSON(msg), v2: undefined }
+      return new MessageV1(
+        msg.id,
+        msg.bytes,
+        m,
+        proto.MessageHeaderV1.fromJSON(msg.header),
+        msg.senderAddress
+      )
+    }
   }
 
   static async create(
@@ -223,6 +256,41 @@ export class MessageV2 extends MessageBase implements proto.MessageV2 {
     this.header = header
     this.signed = signed
     this.senderAddress = senderAddress
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static toJSON(msg: MessageV2): any {
+    return {
+      headerBytes: msg.headerBytes,
+      ciphertext: cipherProto.Ciphertext.toJSON(msg.ciphertext),
+      id: msg.id,
+      bytes: msg.bytes,
+      header: proto.MessageHeaderV2.toJSON(msg.header),
+      signed: msg.signed
+        ? protoContent.SignedContent.toJSON(msg.signed)
+        : undefined,
+      senderAddress: msg.senderAddress,
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  static from(msg: MessageV2 | any): MessageV2 {
+    if (msg instanceof MessageV2) {
+      return msg
+    } else {
+      if (typeof msg.bytes === 'object') {
+        msg.bytes = parseObjectToUint8Array(msg.bytes)
+      }
+      const m = { v2: proto.MessageV2.fromJSON(msg), v1: undefined }
+      return new MessageV2(
+        msg.id,
+        msg.bytes,
+        m,
+        proto.MessageHeaderV2.fromJSON(msg.header),
+        protoContent.SignedContent.fromJSON(msg.signed),
+        msg.senderAddress
+      )
+    }
   }
 
   static async create(

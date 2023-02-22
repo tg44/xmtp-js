@@ -4,12 +4,13 @@ import {
   decodeMessageV2,
   encodeMessageV1,
   encodeMessageV2,
-} from "../../src/conversations"
+} from '../../src/conversations'
 import {
   DecodedMessage,
   DecodedMessageExport,
   MessageV1,
-} from './../../src/Message'
+  MessageV2,
+} from '../../src'
 import { buildDirectMessageTopic, buildUserIntroTopic } from '../../src/utils'
 import {
   Client,
@@ -770,7 +771,7 @@ describe('conversation', () => {
       const keys = deepcopy(bobConversation.getClient().legacyKeys)
       const keysV2 = deepcopy(bobConversation.getClient().keys)
 
-      const msg = await encodeMessageV1(
+      const msg1 = await encodeMessageV1(
         'Hi Alice!',
         deepcopy(bobConversation.export()),
         keys,
@@ -781,6 +782,9 @@ describe('conversation', () => {
             baseCodecs[`${c.authorityId}/${c.typeId}`],
         }
       )
+
+      const msg2 = deepcopy(MessageV1.toJSON(msg1))
+      const msg = MessageV1.from(msg2)
 
       await bobConversation.getClient().publishEnvelopes(
         topics.map((topic) => ({
@@ -866,7 +870,7 @@ describe('conversation', () => {
         throw new Error('unexpected convo version')
       }
 
-      const msg = await encodeMessageV2(
+      const msg1 = await encodeMessageV2(
         'Hi Alice!',
         deepcopy(convo),
         deepcopy(bobConversation.getClient().legacyKeys),
@@ -878,6 +882,10 @@ describe('conversation', () => {
         },
         undefined
       )
+
+      const msg2 = deepcopy(MessageV2.toJSON(msg1))
+      const msg = MessageV2.from(msg2)
+
       await bobConversation.getClient().publishEnvelopes([
         {
           contentTopic: bobConversation.topic,
